@@ -7,12 +7,13 @@ interface DeployRequestBody {
   chatId: string;
 }
 
-async function sha1(message: string) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+// Helper function to create SHA1 hash using Web Crypto API
+async function createSHA1Hash(content: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(content);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex;
 }
 
@@ -112,7 +113,7 @@ export async function action({ request }: ActionFunctionArgs) {
     for (const [filePath, content] of Object.entries(files)) {
       // Ensure file path starts with a forward slash
       const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
-      const hash = await sha1(content);
+      const hash = await createSHA1Hash(content);
       fileDigests[normalizedPath] = hash;
     }
 

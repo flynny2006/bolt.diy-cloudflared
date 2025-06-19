@@ -85,8 +85,9 @@ export const TerminalTabs = memo(() => {
       }}
     >
       <div className="h-full">
-        <div className="bg-bolt-elements-terminals-background h-full flex flex-col">
-          <div className="flex items-center bg-bolt-elements-background-depth-2 border-y border-bolt-elements-borderColor gap-1.5 min-h-[34px] p-2">
+        <div className="bg-gradient-to-br from-gray-900/95 to-blue-950/20 dark:from-gray-950/95 dark:to-blue-950/30 h-full flex flex-col border-t border-blue-200/50 dark:border-blue-700/50">
+          {/* Modern Terminal Header */}
+          <div className="flex items-center bg-gradient-to-r from-blue-50/80 to-blue-100/60 dark:from-blue-950/40 dark:to-blue-900/30 border-b border-blue-200/50 dark:border-blue-700/50 gap-2 min-h-[40px] px-3 py-2 backdrop-blur-sm">
             {Array.from({ length: terminalCount + 1 }, (_, index) => {
               const isActive = activeTerminal === index;
 
@@ -96,44 +97,51 @@ export const TerminalTabs = memo(() => {
                     <button
                       key={index}
                       className={classNames(
-                        'flex items-center text-sm cursor-pointer gap-1.5 px-3 py-2 h-full whitespace-nowrap rounded-full',
+                        'flex items-center text-sm cursor-pointer gap-2 px-4 py-2 h-full whitespace-nowrap rounded-xl font-medium transition-all duration-200',
                         {
-                          'bg-bolt-elements-terminals-buttonBackground text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary':
+                          'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg transform hover:scale-105':
                             isActive,
-                          'bg-bolt-elements-background-depth-2 text-bolt-elements-textSecondary hover:bg-bolt-elements-terminals-buttonBackground':
+                          'bg-white/60 dark:bg-gray-800/60 text-blue-700 dark:text-blue-300 hover:bg-blue-50/80 dark:hover:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/50':
                             !isActive,
                         },
                       )}
                       onClick={() => setActiveTerminal(index)}
                     >
                       <div className="i-ph:terminal-window-duotone text-lg" />
-                      Bolt Terminal
+                      <span className="font-semibold">Bolt Terminal</span>
                     </button>
                   ) : (
                     <React.Fragment>
                       <button
                         key={index}
                         className={classNames(
-                          'flex items-center text-sm cursor-pointer gap-1.5 px-3 py-2 h-full whitespace-nowrap rounded-full',
+                          'flex items-center text-sm cursor-pointer gap-2 px-4 py-2 h-full whitespace-nowrap rounded-xl font-medium transition-all duration-200',
                           {
-                            'bg-bolt-elements-terminals-buttonBackground text-bolt-elements-textPrimary': isActive,
-                            'bg-bolt-elements-background-depth-2 text-bolt-elements-textSecondary hover:bg-bolt-elements-terminals-buttonBackground':
+                            'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg transform hover:scale-105': isActive,
+                            'bg-white/60 dark:bg-gray-800/60 text-blue-700 dark:text-blue-300 hover:bg-blue-50/80 dark:hover:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/50':
                               !isActive,
                           },
                         )}
                         onClick={() => setActiveTerminal(index)}
                       >
                         <div className="i-ph:terminal-window-duotone text-lg" />
-                        Terminal {terminalCount > 1 && index}
+                        <span className="font-semibold">Terminal {terminalCount > 1 && index}</span>
                       </button>
                     </React.Fragment>
                   )}
                 </React.Fragment>
               );
             })}
-            {terminalCount < MAX_TERMINALS && <IconButton icon="i-ph:plus" size="md" onClick={addTerminal} />}
+            {terminalCount < MAX_TERMINALS && (
+              <IconButton 
+                icon="i-ph:plus" 
+                size="md" 
+                onClick={addTerminal}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-white/60 dark:bg-gray-800/60 hover:bg-blue-50/80 dark:hover:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/50 rounded-xl transition-all duration-200"
+              />
+            )}
             <IconButton
-              className="ml-auto"
+              className="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-white/60 dark:bg-gray-800/60 hover:bg-blue-50/80 dark:hover:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/50 rounded-xl transition-all duration-200"
               icon="i-ph:caret-down"
               title="Close"
               size="md"
@@ -150,7 +158,7 @@ export const TerminalTabs = memo(() => {
                 <Terminal
                   key={index}
                   id={`terminal_${index}`}
-                  className={classNames('h-full overflow-hidden modern-scrollbar-invert', {
+                  className={classNames('h-full overflow-hidden modern-terminal-scrollbar', {
                     hidden: !isActive,
                   })}
                   ref={(ref) => {
@@ -166,7 +174,7 @@ export const TerminalTabs = memo(() => {
                 <Terminal
                   key={index}
                   id={`terminal_${index}`}
-                  className={classNames('modern-scrollbar h-full overflow-hidden', {
+                  className={classNames('modern-terminal-scrollbar h-full overflow-hidden', {
                     hidden: !isActive,
                   })}
                   ref={(ref) => {

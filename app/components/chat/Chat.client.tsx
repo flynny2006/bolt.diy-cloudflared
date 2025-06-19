@@ -27,6 +27,8 @@ import { logStore } from '~/lib/stores/logs';
 import { streamingState } from '~/lib/stores/streaming';
 import { filesToArtifacts } from '~/utils/fileUtils';
 import { supabaseConnection } from '~/lib/stores/supabase';
+import { defaultDesignScheme, type DesignScheme } from '~/types/design-scheme';
+import type { ElementInfo } from '~/components/workbench/Inspector';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -124,6 +126,7 @@ export const ChatImpl = memo(
     const [searchParams, setSearchParams] = useSearchParams();
     const [fakeLoading, setFakeLoading] = useState(false);
     const files = useStore(workbenchStore.files);
+    const [designScheme, setDesignScheme] = useState<DesignScheme>(defaultDesignScheme);
     const actionAlert = useStore(workbenchStore.alert);
     const deployAlert = useStore(workbenchStore.deployAlert);
     const supabaseConn = useStore(supabaseConnection); // Add this line to get Supabase connection
@@ -132,7 +135,6 @@ export const ChatImpl = memo(
     );
     const supabaseAlert = useStore(workbenchStore.supabaseAlert);
     const { activeProviders, promptId, autoSelectTemplate, contextOptimizationEnabled } = useSettings();
-
     const [model, setModel] = useState(() => {
       const savedModel = Cookies.get('selectedModel');
       return savedModel || DEFAULT_MODEL;
@@ -141,12 +143,40 @@ export const ChatImpl = memo(
       const savedProvider = Cookies.get('selectedProvider');
       return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
     });
-
     const { showChat } = useStore(chatStore);
-
     const [animationScope, animate] = useAnimate();
-
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+    const [chatMode, setChatMode] = useState<'discuss' | 'build'>('build');
+    const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
+    const [isFixRequest, setIsFixRequest] = useState(false);
+
+    // Helper function to check token limits
+    const checkTokenLimits = (isFixRequestFlag?: boolean): boolean => {
+      if (isFixRequestFlag) {
+        return true; // Skip check for fix requests
+      }
+
+      try {
+        const stored = localStorage.getItem('tokenUsage');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const today = new Date().toDateString();
+          
+          if (parsed.lastResetDate === today) {
+            const remainingTokens = 300000 - parsed.dailyTokensUsed;
+            if (remainingTokens <= 0) {
+              toast.error('Daily token limit reached. Please upgrade your plan to continue.');
+              window.location.href = '/pricing';
+              return false;
+            }
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error('Error checking token limits:', error);
+        return true; // Continue with sending message if there's an error checking limits
+      }
+    };
 
     const {
       messages,
@@ -168,6 +198,9 @@ export const ChatImpl = memo(
         files,
         promptId,
         contextOptimization: contextOptimizationEnabled,
+        chatMode,
+        designScheme,
+        isFixRequest,
         supabase: {
           isConnected: supabaseConn.isConnected,
           hasSelectedProject: !!selectedProject,
@@ -189,11 +222,16 @@ export const ChatImpl = memo(
           'There was an error processing your request: ' + (e.message ? e.message : 'No details were returned'),
         );
       },
+      onResponse: (response) => {
+        // This will be called for each chunk of the streaming response
+        // We can extract token usage from message annotations here
+        console.log('Response received:', response);
+      },
       onFinish: (message, response) => {
         const usage = response.usage;
         setData(undefined);
 
-        if (usage) {
+        if (usage && !isFixRequest) {
           console.log('Token usage:', usage);
           logStore.logProvider('Chat response completed', {
             component: 'Chat',
@@ -203,6 +241,20 @@ export const ChatImpl = memo(
             usage,
             messageLength: message.content.length,
           });
+
+          // Pass token usage to the data stream so BaseChat can track it
+          setData([{
+            type: 'usage',
+            value: {
+              completionTokens: usage.completionTokens || 0,
+              promptTokens: usage.promptTokens || 0,
+              totalTokens: usage.totalTokens || 0,
+            }
+          }]);
+        } else if (isFixRequest) {
+          console.log('Fix request completed - no tokens charged');
+          // Reset the fix request flag
+          setIsFixRequest(false);
         }
 
         logger.debug('Finished streaming');
@@ -216,6 +268,11 @@ export const ChatImpl = memo(
       // console.log(prompt, searchParams, model, provider);
 
       if (prompt) {
+        // Check token limits before sending prompt from URL
+        if (!checkTokenLimits()) {
+          return;
+        }
+
         setSearchParams({});
         runAnimation();
         append({
@@ -298,7 +355,7 @@ export const ChatImpl = memo(
       setChatStarted(true);
     };
 
-    const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
+    const sendMessage = async (_event: React.UIEvent, messageInput?: string, isFixRequestFlag?: boolean) => {
       const messageContent = messageInput || input;
 
       if (!messageContent?.trim()) {
@@ -310,8 +367,22 @@ export const ChatImpl = memo(
         return;
       }
 
-      // If no locked items, proceed normally with the original message
-      const finalMessageContent = messageContent;
+      // Check token limits before sending (skip for fix requests)
+      if (!checkTokenLimits(isFixRequestFlag)) {
+        return;
+      }
+
+      // Set the fix request flag
+      setIsFixRequest(isFixRequestFlag || false);
+
+      let finalMessageContent = messageContent;
+
+      if (selectedElement) {
+        console.log('Selected Element:', selectedElement);
+
+        const elementInfo = `<div class=\"__boltSelectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
+        finalMessageContent = messageContent + elementInfo;
+      }
 
       runAnimation();
 
@@ -337,6 +408,11 @@ export const ChatImpl = memo(
             });
 
             if (temResp) {
+              // Check token limits before sending template message
+              if (!checkTokenLimits(isFixRequestFlag)) {
+                return;
+              }
+
               const { assistantMessage, userMessage } = temResp;
               setMessages([
                 {
@@ -383,6 +459,11 @@ export const ChatImpl = memo(
         }
 
         // If autoSelectTemplate is disabled or template selection failed, proceed with normal message
+        // Check token limits before sending normal message
+        if (!checkTokenLimits(isFixRequestFlag)) {
+          return;
+        }
+
         setMessages([
           {
             id: `${new Date().getTime()}`,
@@ -564,6 +645,13 @@ export const ChatImpl = memo(
         deployAlert={deployAlert}
         clearDeployAlert={() => workbenchStore.clearDeployAlert()}
         data={chatData}
+        chatMode={chatMode}
+        setChatMode={setChatMode}
+        append={append}
+        designScheme={designScheme}
+        setDesignScheme={setDesignScheme}
+        selectedElement={selectedElement}
+        setSelectedElement={setSelectedElement}
       />
     );
   },

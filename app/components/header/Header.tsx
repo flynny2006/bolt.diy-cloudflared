@@ -4,13 +4,19 @@ import { chatStore } from '~/lib/stores/chat';
 import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
+import type { User } from '~/lib/services/userService';
 
-export function Header() {
+interface HeaderProps {
+  onLogout?: () => void;
+  currentUser?: User | null;
+}
+
+export function Header({ onLogout, currentUser }: HeaderProps) {
   const chat = useStore(chatStore);
 
   return (
     <header
-      className={classNames('flex items-center p-5 border-b h-[var(--header-height)]', {
+      className={classNames('flex items-center px-4 border-b h-[var(--header-height)]', {
         'border-transparent': !chat.started,
         'border-bolt-elements-borderColor': chat.started,
       })}
@@ -30,12 +36,29 @@ export function Header() {
           </span>
           <ClientOnly>
             {() => (
-              <div className="mr-1">
-                <HeaderActionButtons />
+              <div className="">
+                <HeaderActionButtons chatStarted={chat.started} />
               </div>
             )}
           </ClientOnly>
         </>
+      )}
+      
+      {/* User info and logout button */}
+      {currentUser && (
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="text-sm text-bolt-elements-textSecondary">
+            Welcome, <span className="text-bolt-elements-textPrimary font-medium">{currentUser.username}</span>
+          </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          )}
+        </div>
       )}
     </header>
   );

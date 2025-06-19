@@ -38,8 +38,16 @@ export const Terminal = memo(
           convertEol: true,
           disableStdin: readonly,
           theme: getTerminalTheme(readonly ? { cursor: '#00000000' } : {}),
-          fontSize: 12,
-          fontFamily: 'Menlo, courier-new, courier, monospace',
+          fontSize: 16,
+          fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Menlo", "Consolas", "Courier New", monospace',
+          fontWeight: '400',
+          letterSpacing: 0.5,
+          lineHeight: 1.2,
+          cursorStyle: 'block',
+          cursorWidth: 2,
+          scrollback: 1000,
+          fastScrollModifier: 'alt',
+          fastScrollSensitivity: 5,
         });
 
         terminalRef.current = terminal;
