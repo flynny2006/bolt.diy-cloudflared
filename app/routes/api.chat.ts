@@ -38,13 +38,14 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme } = await request.json<{
+  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, isFixRequest } = await request.json<{
     messages: Messages;
     files: any;
     promptId?: string;
     contextOptimization: boolean;
     chatMode: 'discuss' | 'build';
     designScheme?: DesignScheme;
+    isFixRequest?: boolean;
     supabase?: {
       isConnected: boolean;
       hasSelectedProject: boolean;
@@ -109,7 +110,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             promptId,
             contextOptimization,
             onFinish(resp) {
-              if (resp.usage) {
+              if (resp.usage && !isFixRequest) {
                 logger.debug('createSummary token usage', JSON.stringify(resp.usage));
                 cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
                 cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
@@ -153,7 +154,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             contextOptimization,
             summary,
             onFinish(resp) {
-              if (resp.usage) {
+              if (resp.usage && !isFixRequest) {
                 logger.debug('selectContext token usage', JSON.stringify(resp.usage));
                 cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
                 cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
@@ -196,21 +197,24 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           onFinish: async ({ text: content, finishReason, usage }) => {
             logger.debug('usage', JSON.stringify(usage));
 
-            if (usage) {
+            if (usage && !isFixRequest) {
               cumulativeUsage.completionTokens += usage.completionTokens || 0;
               cumulativeUsage.promptTokens += usage.promptTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
             }
 
             if (finishReason !== 'length') {
-              dataStream.writeMessageAnnotation({
-                type: 'usage',
-                value: {
-                  completionTokens: cumulativeUsage.completionTokens,
-                  promptTokens: cumulativeUsage.promptTokens,
-                  totalTokens: cumulativeUsage.totalTokens,
-                },
-              });
+              // Only send usage annotation if it's not a fix request
+              if (!isFixRequest) {
+                dataStream.writeMessageAnnotation({
+                  type: 'usage',
+                  value: {
+                    completionTokens: cumulativeUsage.completionTokens,
+                    promptTokens: cumulativeUsage.promptTokens,
+                    totalTokens: cumulativeUsage.totalTokens,
+                  },
+                });
+              }
               dataStream.writeData({
                 type: 'progress',
                 label: 'response',

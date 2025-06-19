@@ -16,9 +16,9 @@ body {
 
 :root {
   --gradient-opacity: 0.8;
-  --primary-color: rgba(158, 117, 240, var(--gradient-opacity));
-  --secondary-color: rgba(138, 43, 226, var(--gradient-opacity));
-  --accent-color: rgba(128, 59, 239, var(--gradient-opacity));
+  --primary-color: rgba(20, 136, 252, var(--gradient-opacity));      // #1488fc
+  --secondary-color: rgba(0, 82, 212, var(--gradient-opacity));      // #0052d4
+  --accent-color: rgba(0, 212, 255, var(--gradient-opacity));        // #00d4ff
   // --primary-color: rgba(147, 112, 219, var(--gradient-opacity));
   // --secondary-color: rgba(138, 43, 226, var(--gradient-opacity));
   // --accent-color: rgba(180, 170, 220, var(--gradient-opacity));
@@ -70,4 +70,54 @@ body {
 
   // Firefox support for inverted colors
   scrollbar-color: color-mix(in srgb, var(--bolt-elements-textPrimary), transparent 50%) transparent;
+}
+
+// Custom scrollbar for workbench components
+.custom-scrollbar {
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.3));
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    transition: all 0.2s ease-in-out;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(37, 99, 235, 0.5));
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  // Firefox support
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.3) transparent;
+}
+
+// Dark theme scrollbar
+.dark .custom-scrollbar {
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(59, 130, 246, 0.3));
+    border-color: rgba(96, 165, 250, 0.1);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.5), rgba(59, 130, 246, 0.5));
+    border-color: rgba(96, 165, 250, 0.2);
+  }
+
+  scrollbar-color: rgba(96, 165, 250, 0.3) transparent;
 }
