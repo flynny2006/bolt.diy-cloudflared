@@ -61,7 +61,25 @@ export const ModelSelector = ({
       (model) =>
         model.label.toLowerCase().includes(modelSearchQuery.toLowerCase()) ||
         model.name.toLowerCase().includes(modelSearchQuery.toLowerCase()),
-    );
+    )
+    .map(model => ({
+      ...model,
+      isAvailable: model.label === "Gemini 2.5 Flash Preview" || 
+                   model.name === "gemini-2.5-flash-preview" ||
+                   model.label === "Gemini 2.5 Flash - context 1114k" ||
+                   model.name === "gemini-2.5-flash-1114k" ||
+                   model.label === "GPT-3.5 Turbo" ||
+                   model.name === "gpt-3.5-turbo" ||
+                   model.label === "GPT-4o Mini" ||
+                   model.name === "gpt-4o-mini" ||
+                   model.label === "GPT-4o" ||
+                   model.name === "gpt-4o" ||
+                   model.label === "Claude 3.5 Haiku (new)" ||
+                   model.name === "claude-3-5-haiku-latest" ||
+                   model.label === "Claude 3 Haiku" ||
+                   model.name === "claude-3-haiku-20240307"
+    }))
+    .filter(model => model.isAvailable);
 
   const filteredProviders = providerList.filter((p) =>
     p.name.toLowerCase().includes(providerSearchQuery.toLowerCase()),
@@ -69,6 +87,10 @@ export const ModelSelector = ({
 
   useEffect(() => {
     setFocusedModelIndex(-1);
+    // If there are models, focus on the first one
+    if (filteredModels.length > 0) {
+      setFocusedModelIndex(0);
+    }
   }, [modelSearchQuery, isModelDropdownOpen]);
 
   useEffect(() => {
@@ -149,10 +171,47 @@ export const ModelSelector = ({
           if (setProvider) {
             setProvider(selectedProvider);
 
-            const firstModel = modelList.find((m) => m.provider === selectedProvider.name);
+            // Get models for the selected provider
+            const providerModels = modelList
+              .filter((m) => m.provider === selectedProvider.name)
+              .map(model => ({
+                ...model,
+                isAvailable: model.label === "Gemini 2.5 Flash Preview" || 
+                             model.name === "gemini-2.5-flash-preview" ||
+                             model.label === "Gemini 2.5 Flash - context 1114k" ||
+                             model.name === "gemini-2.5-flash-1114k" ||
+                             model.label === "GPT-3.5 Turbo" ||
+                             model.name === "gpt-3.5-turbo" ||
+                             model.label === "GPT-4o Mini" ||
+                             model.name === "gpt-4o-mini" ||
+                             model.label === "GPT-4o" ||
+                             model.name === "gpt-4o" ||
+                             model.label === "Claude 3.5 Haiku (new)" ||
+                             model.name === "claude-3-5-haiku-latest" ||
+                             model.label === "Claude 3 Haiku" ||
+                             model.name === "claude-3-haiku-20240307"
+              }))
+              .filter(model => model.isAvailable);
 
-            if (firstModel && setModel) {
-              setModel(firstModel.name);
+            if (providerModels.length > 0 && setModel) {
+              // Try to find a free model first
+              const freeModels = [
+                "gpt-3.5-turbo",
+                "claude-3-5-haiku-latest", 
+                "claude-3-haiku-20240307"
+              ];
+              
+              const freeModel = providerModels.find(model => 
+                freeModels.includes(model.name) || 
+                freeModels.includes(model.label)
+              );
+              
+              if (freeModel) {
+                setModel(freeModel.name);
+              } else {
+                // If no free model, select the first available
+                setModel(providerModels[0].name);
+              }
             }
           }
 
@@ -196,13 +255,77 @@ export const ModelSelector = ({
       const firstEnabledProvider = providerList[0];
       setProvider?.(firstEnabledProvider);
 
-      const firstModel = modelList.find((m) => m.provider === firstEnabledProvider.name);
+      // Get models for the selected provider
+      const providerModels = modelList
+        .filter((m) => m.provider === firstEnabledProvider.name)
+        .map(model => ({
+          ...model,
+          isAvailable: model.label === "Gemini 2.5 Flash Preview" || 
+                       model.name === "gemini-2.5-flash-preview" ||
+                       model.label === "Gemini 2.5 Flash - context 1114k" ||
+                       model.name === "gemini-2.5-flash-1114k" ||
+                       model.label === "GPT-3.5 Turbo" ||
+                       model.name === "gpt-3.5-turbo" ||
+                       model.label === "GPT-4o Mini" ||
+                       model.name === "gpt-4o-mini" ||
+                       model.label === "GPT-4o" ||
+                       model.name === "gpt-4o" ||
+                       model.label === "Claude 3.5 Haiku (new)" ||
+                       model.name === "claude-3-5-haiku-latest" ||
+                       model.label === "Claude 3 Haiku" ||
+                       model.name === "claude-3-haiku-20240307"
+        }))
+        .filter(model => model.isAvailable);
 
-      if (firstModel) {
-        setModel?.(firstModel.name);
+      if (providerModels.length > 0 && setModel) {
+        // Try to find a free model first
+        const freeModels = [
+          "gpt-3.5-turbo",
+          "claude-3-5-haiku-latest", 
+          "claude-3-haiku-20240307"
+        ];
+        
+        const freeModel = providerModels.find(model => 
+          freeModels.includes(model.name) || 
+          freeModels.includes(model.label)
+        );
+        
+        if (freeModel) {
+          setModel(freeModel.name);
+        } else {
+          // If no free model, select the first available
+          setModel(providerModels[0].name);
+        }
       }
     }
   }, [providerList, provider, setProvider, modelList, setModel]);
+
+  // Function to get the first available free model
+  const getFirstFreeModel = () => {
+    const freeModels = [
+      "gpt-3.5-turbo",
+      "claude-3-5-haiku-latest", 
+      "claude-3-haiku-20240307"
+    ];
+    
+    return filteredModels.find(model => 
+      freeModels.includes(model.name) || 
+      freeModels.includes(model.label)
+    );
+  };
+
+  // Ensure a free model is selected by default
+  useEffect(() => {
+    if (filteredModels.length > 0 && !model) {
+      const freeModel = getFirstFreeModel();
+      if (freeModel && setModel) {
+        setModel(freeModel.name);
+      } else if (setModel) {
+        // If no free model found, select the first available model
+        setModel(filteredModels[0].name);
+      }
+    }
+  }, [filteredModels, model, setModel]);
 
   if (providerList.length === 0) {
     return (
@@ -323,10 +446,47 @@ export const ModelSelector = ({
                       if (setProvider) {
                         setProvider(providerOption);
 
-                        const firstModel = modelList.find((m) => m.provider === providerOption.name);
+                        // Get models for the selected provider
+                        const providerModels = modelList
+                          .filter((m) => m.provider === providerOption.name)
+                          .map(model => ({
+                            ...model,
+                            isAvailable: model.label === "Gemini 2.5 Flash Preview" || 
+                                         model.name === "gemini-2.5-flash-preview" ||
+                                         model.label === "Gemini 2.5 Flash - context 1114k" ||
+                                         model.name === "gemini-2.5-flash-1114k" ||
+                                         model.label === "GPT-3.5 Turbo" ||
+                                         model.name === "gpt-3.5-turbo" ||
+                                         model.label === "GPT-4o Mini" ||
+                                         model.name === "gpt-4o-mini" ||
+                                         model.label === "GPT-4o" ||
+                                         model.name === "gpt-4o" ||
+                                         model.label === "Claude 3.5 Haiku (new)" ||
+                                         model.name === "claude-3-5-haiku-latest" ||
+                                         model.label === "Claude 3 Haiku" ||
+                                         model.name === "claude-3-haiku-20240307"
+                          }))
+                          .filter(model => model.isAvailable);
 
-                        if (firstModel && setModel) {
-                          setModel(firstModel.name);
+                        if (providerModels.length > 0 && setModel) {
+                          // Try to find a free model first
+                          const freeModels = [
+                            "gpt-3.5-turbo",
+                            "claude-3-5-haiku-latest", 
+                            "claude-3-haiku-20240307"
+                          ];
+                          
+                          const freeModel = providerModels.find(model => 
+                            freeModels.includes(model.name) || 
+                            freeModels.includes(model.label)
+                          );
+                          
+                          if (freeModel) {
+                            setModel(freeModel.name);
+                          } else {
+                            // If no free model, select the first available
+                            setModel(providerModels[0].name);
+                          }
                         }
                       }
 

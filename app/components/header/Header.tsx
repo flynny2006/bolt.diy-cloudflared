@@ -4,8 +4,14 @@ import { chatStore } from '~/lib/stores/chat';
 import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
+import type { User } from '~/lib/services/userService';
 
-export function Header() {
+interface HeaderProps {
+  onLogout?: () => void;
+  currentUser?: User | null;
+}
+
+export function Header({ onLogout, currentUser }: HeaderProps) {
   const chat = useStore(chatStore);
 
   return (
@@ -36,6 +42,23 @@ export function Header() {
             )}
           </ClientOnly>
         </>
+      )}
+      
+      {/* User info and logout button */}
+      {currentUser && (
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="text-sm text-bolt-elements-textSecondary">
+            Welcome, <span className="text-bolt-elements-textPrimary font-medium">{currentUser.username}</span>
+          </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          )}
+        </div>
       )}
     </header>
   );

@@ -1011,8 +1011,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
               />
             </>
           ) : (
-            <div className="flex w-full h-full justify-center items-center bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary">
-              No preview available
+            <div className="flex w-full h-full justify-center items-center bg-bolt-elements-background-depth-1">
+              <div className="text-center max-w-md mx-auto px-6">
+                <div className="i-ph:monitor text-6xl text-bolt-elements-textSecondary mb-6 opacity-50"></div>
+                <h3 className="text-xl font-semibold text-bolt-elements-textPrimary mb-2">
+                  No Preview Available
+                </h3>
+                <p className="text-bolt-elements-textSecondary text-sm leading-relaxed">
+                  Start building your project to see a live preview here. 
+                  The preview will appear automatically when you create or modify files.
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-bolt-elements-textTertiary">
+                  <div className="i-ph:lightbulb text-yellow-500"></div>
+                  <span>Try creating an HTML file or running a development server</span>
+                </div>
+              </div>
             </div>
           )}
 

@@ -231,7 +231,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                 </div>
                 {type === 'file' ? (
                   <div>
-                    Create{' '}
+                    {status === 'running' ? 'Building' : status === 'complete' ? 'Builded' : 'Build'}{' '}
                     <code
                       className="bg-bolt-elements-artifacts-inlineCode-background text-bolt-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-bolt-elements-item-contentAccent hover:underline cursor-pointer"
                       onClick={() => openArtifactInWorkbench(action.filePath)}

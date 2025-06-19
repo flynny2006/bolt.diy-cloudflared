@@ -33,6 +33,7 @@ import { StickToBottom, useStickToBottomContext } from '~/lib/hooks';
 import { ChatBox } from './ChatBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
+import TokenUsageTracker from './TokenUsageTracker';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -55,7 +56,7 @@ interface BaseChatProps {
   setProvider?: (provider: ProviderInfo) => void;
   providerList?: ProviderInfo[];
   handleStop?: () => void;
-  sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
+  sendMessage?: (event: React.UIEvent, messageInput?: string, isFixRequest?: boolean) => void;
   handleInputChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   enhancePrompt?: () => void;
   importChat?: (description: string, messages: Message[]) => Promise<void>;
@@ -138,6 +139,42 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const expoUrl = useStore(expoUrlAtom);
     const [qrModalOpen, setQrModalOpen] = useState(false);
+    const [tokenUsage, setTokenUsage] = useState<{ promptTokens: number; completionTokens: number; totalTokens: number }>({
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0
+    });
+    const [countdown, setCountdown] = useState('');
+
+    // Countdown timer for unlimited tokens
+    useEffect(() => {
+      const targetDate = new Date('2025-06-20T17:11:00');
+      
+      const updateCountdown = () => {
+        const now = new Date();
+        const difference = targetDate.getTime() - now.getTime();
+        
+        if (difference <= 0) {
+          setCountdown('Unlimited tokens ended');
+          return;
+        }
+        
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      };
+      
+      // Update immediately
+      updateCountdown();
+      
+      // Update every second
+      const interval = setInterval(updateCountdown, 1000);
+      
+      return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
       if (expoUrl) {
@@ -151,6 +188,19 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           (x) => typeof x === 'object' && (x as any).type === 'progress',
         ) as ProgressAnnotation[];
         setProgressAnnotations(progressList);
+
+        // Extract token usage from usage annotations
+        const usageAnnotation = data.find(
+          (x) => typeof x === 'object' && (x as any).type === 'usage'
+        ) as any;
+        
+        if (usageAnnotation?.value) {
+          setTokenUsage({
+            promptTokens: usageAnnotation.value.promptTokens || 0,
+            completionTokens: usageAnnotation.value.completionTokens || 0,
+            totalTokens: usageAnnotation.value.totalTokens || 0
+          });
+        }
       }
     }, [data]);
     useEffect(() => {
@@ -260,9 +310,35 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       }
     };
 
-    const handleSendMessage = (event: React.UIEvent, messageInput?: string) => {
+    const handleSendMessage = (event: React.UIEvent, messageInput?: string, isFixRequest?: boolean) => {
+      // Check token limits before sending (skip for fix requests)
+      if (!isFixRequest) {
+        try {
+          const stored = localStorage.getItem('tokenUsage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            const today = new Date().toDateString();
+            
+            // Reset if it's a new day
+            if (parsed.lastResetDate !== today) {
+              // New day, tokens reset
+            } else {
+              const remainingTokens = 300000 - parsed.dailyTokensUsed;
+              if (remainingTokens <= 0) {
+                // Show upgrade modal or redirect to pricing
+                window.location.href = '/pricing';
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking token limits:', error);
+          // Continue with sending message if there's an error checking limits
+        }
+      }
+
       if (sendMessage) {
-        sendMessage(event, messageInput);
+        sendMessage(event, messageInput, isFixRequest);
         setSelectedElement?.(null);
 
         if (recognition) {
@@ -334,163 +410,197 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     };
 
     const baseChat = (
-      <div
-        ref={ref}
-        className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
-        data-chat-visible={showChat}
-      >
-        <ClientOnly>{() => <Menu />}</ClientOnly>
-        <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
-            {!chatStarted && (
-              <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                  Where ideas begin now
-                </h1>
-                <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
-                  Bring ideas to life in seconds or get help on existing projects.
-                </p>
-              </div>
-            )}
-            <StickToBottom
-              className={classNames('pt-6 px-2 sm:px-6 relative', {
-                'h-full flex flex-col modern-scrollbar': chatStarted,
-              })}
-              resize="smooth"
-              initial="smooth"
-            >
-              <StickToBottom.Content className="flex flex-col gap-4 relative ">
-                <ClientOnly>
-                  {() => {
-                    return chatStarted ? (
-                      <Messages
-                        className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
-                        messages={messages}
-                        isStreaming={isStreaming}
-                        append={append}
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        provider={provider}
-                        model={model}
-                      />
-                    ) : null;
-                  }}
-                </ClientOnly>
-                <ScrollToBottom />
-              </StickToBottom.Content>
-              <div
-                className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
-                  'sticky bottom-2': chatStarted,
-                })}
-              >
-                <div className="flex flex-col gap-2">
-                  {deployAlert && (
-                    <DeployChatAlert
-                      alert={deployAlert}
-                      clearAlert={() => clearDeployAlert?.()}
-                      postMessage={(message: string | undefined) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
-                      }}
-                    />
-                  )}
-                  {supabaseAlert && (
-                    <SupabaseChatAlert
-                      alert={supabaseAlert}
-                      clearAlert={() => clearSupabaseAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
-                      }}
-                    />
-                  )}
-                  {actionAlert && (
-                    <ChatAlert
-                      alert={actionAlert}
-                      clearAlert={() => clearAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearAlert?.();
-                      }}
-                    />
-                  )}
-                </div>
-                {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
-                <ChatBox
-                  isModelSettingsCollapsed={isModelSettingsCollapsed}
-                  setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
-                  provider={provider}
-                  setProvider={setProvider}
-                  providerList={providerList || (PROVIDER_LIST as ProviderInfo[])}
-                  model={model}
-                  setModel={setModel}
-                  modelList={modelList}
-                  apiKeys={apiKeys}
-                  isModelLoading={isModelLoading}
-                  onApiKeysChange={onApiKeysChange}
-                  uploadedFiles={uploadedFiles}
-                  setUploadedFiles={setUploadedFiles}
-                  imageDataList={imageDataList}
-                  setImageDataList={setImageDataList}
-                  textareaRef={textareaRef}
-                  input={input}
-                  handleInputChange={handleInputChange}
-                  handlePaste={handlePaste}
-                  TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
-                  TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
-                  isStreaming={isStreaming}
-                  handleStop={handleStop}
-                  handleSendMessage={handleSendMessage}
-                  enhancingPrompt={enhancingPrompt}
-                  enhancePrompt={enhancePrompt}
-                  isListening={isListening}
-                  startListening={startListening}
-                  stopListening={stopListening}
-                  chatStarted={chatStarted}
-                  exportChat={exportChat}
-                  qrModalOpen={qrModalOpen}
-                  setQrModalOpen={setQrModalOpen}
-                  handleFileUpload={handleFileUpload}
-                  chatMode={chatMode}
-                  setChatMode={setChatMode}
-                  designScheme={designScheme}
-                  setDesignScheme={setDesignScheme}
-                  selectedElement={selectedElement}
-                  setSelectedElement={setSelectedElement}
-                />
-              </div>
-            </StickToBottom>
-            <div className="flex flex-col justify-center">
+      <div className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')} data-chat-visible={showChat} ref={ref}>
+        <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-center font-semibold z-50" style={{ fontSize: '15px', lineHeight: '2.2', minHeight: 'unset', height: '32px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
+          We are currently experiencing some AI issues. AI requests may fail.
+        </div>
+        <div className="absolute top-0 right-0 mt-2 mr-4 z-50" style={{ display: !chatStarted ? 'block' : 'none' }}>
+          <a href="/pricing" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition-all duration-200">
+            Upgrade Plan
+          </a>
+        </div>
+        <div className="pt-[32px] w-full h-full">
+          <ClientOnly>{() => <Menu />}</ClientOnly>
+          <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
+            <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
               {!chatStarted && (
-                <div className="flex justify-center gap-2">
-                  {ImportButtons(importChat)}
-                  <GitCloneButton importChat={importChat} />
+                <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
+                  <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
+                    What do you want to build?
+                  </h1>
+                  <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
+                    Build fullstack web and mobile apps in seconds.
+                  </p>
+                  <div className="text-lg font-bold text-green-400 animate-fade-in animation-delay-400 mb-8">
+                    ⏰ Unlimited tokens ends in: {countdown}
+                  </div>
                 </div>
               )}
-              <div className="flex flex-col gap-5">
-                {!chatStarted &&
-                  ExamplePrompts((event, messageInput) => {
-                    if (isStreaming) {
-                      handleStop?.();
-                      return;
-                    }
-
-                    handleSendMessage?.(event, messageInput);
+              <StickToBottom
+                className={classNames('pt-6 px-2 sm:px-6 relative', {
+                  'h-full flex flex-col modern-scrollbar': chatStarted,
+                })}
+                resize="smooth"
+                initial="smooth"
+              >
+                <StickToBottom.Content className="flex flex-col gap-4 relative ">
+                  <ClientOnly>
+                    {() => {
+                      return chatStarted ? (
+                        <Messages
+                          className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
+                          messages={messages}
+                          isStreaming={isStreaming}
+                          append={append}
+                          chatMode={chatMode}
+                          setChatMode={setChatMode}
+                          provider={provider}
+                          model={model}
+                        />
+                      ) : null;
+                    }}
+                  </ClientOnly>
+                  <ScrollToBottom />
+                </StickToBottom.Content>
+                <div
+                  className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
+                    'sticky bottom-2': chatStarted,
                   })}
-                {!chatStarted && <StarterTemplates />}
+                >
+                  <div className="flex flex-col gap-2">
+                    {deployAlert && (
+                      <DeployChatAlert
+                        alert={deployAlert}
+                        clearAlert={() => clearDeployAlert?.()}
+                        postMessage={(message: string | undefined) => {
+                          sendMessage?.({} as any, message, false);
+                          clearSupabaseAlert?.();
+                        }}
+                      />
+                    )}
+                    {supabaseAlert && (
+                      <SupabaseChatAlert
+                        alert={supabaseAlert}
+                        clearAlert={() => clearSupabaseAlert?.()}
+                        postMessage={(message) => {
+                          sendMessage?.({} as any, message, false);
+                          clearSupabaseAlert?.();
+                        }}
+                      />
+                    )}
+                    {actionAlert && (
+                      <ChatAlert
+                        alert={actionAlert}
+                        clearAlert={() => clearAlert?.()}
+                        postMessage={(message, isFixRequest) => {
+                          sendMessage?.({} as any, message, isFixRequest);
+                          clearAlert?.();
+                        }}
+                      />
+                    )}
+                  </div>
+                  {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
+                  <TokenUsageTracker 
+                    promptTokens={tokenUsage.promptTokens}
+                    completionTokens={tokenUsage.completionTokens}
+                    totalTokens={tokenUsage.totalTokens}
+                  />
+                  <ChatBox
+                    isModelSettingsCollapsed={isModelSettingsCollapsed}
+                    setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
+                    provider={provider}
+                    setProvider={setProvider}
+                    providerList={providerList || (PROVIDER_LIST as ProviderInfo[])}
+                    model={model}
+                    setModel={setModel}
+                    modelList={modelList}
+                    apiKeys={apiKeys}
+                    isModelLoading={isModelLoading}
+                    onApiKeysChange={onApiKeysChange}
+                    uploadedFiles={uploadedFiles}
+                    setUploadedFiles={setUploadedFiles}
+                    imageDataList={imageDataList}
+                    setImageDataList={setImageDataList}
+                    textareaRef={textareaRef}
+                    input={input}
+                    handleInputChange={handleInputChange}
+                    handlePaste={handlePaste}
+                    TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
+                    TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
+                    isStreaming={isStreaming}
+                    handleStop={handleStop}
+                    handleSendMessage={handleSendMessage}
+                    enhancingPrompt={enhancingPrompt}
+                    enhancePrompt={enhancePrompt}
+                    isListening={isListening}
+                    startListening={startListening}
+                    stopListening={stopListening}
+                    chatStarted={chatStarted}
+                    exportChat={exportChat}
+                    qrModalOpen={qrModalOpen}
+                    setQrModalOpen={setQrModalOpen}
+                    handleFileUpload={handleFileUpload}
+                    chatMode={chatMode}
+                    setChatMode={setChatMode}
+                    designScheme={designScheme}
+                    setDesignScheme={setDesignScheme}
+                    selectedElement={selectedElement}
+                    setSelectedElement={setSelectedElement}
+                  />
+                </div>
+              </StickToBottom>
+              <div className="flex flex-col justify-center">
+                {!chatStarted && (
+                  <div className="flex justify-center gap-2">
+                    {ImportButtons(importChat)}
+                    <GitCloneButton importChat={importChat} />
+                  </div>
+                )}
+                <div className="flex flex-col gap-5">
+                  {!chatStarted &&
+                    ExamplePrompts((event, messageInput) => {
+                      if (isStreaming) {
+                        handleStop?.();
+                        return;
+                      }
+
+                      // Check token limits before sending
+                      try {
+                        const stored = localStorage.getItem('tokenUsage');
+                        if (stored) {
+                          const parsed = JSON.parse(stored);
+                          const today = new Date().toDateString();
+                          
+                          if (parsed.lastResetDate === today) {
+                            const remainingTokens = 300000 - parsed.dailyTokensUsed;
+                            if (remainingTokens <= 0) {
+                              window.location.href = '/pricing';
+                              return;
+                            }
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error checking token limits:', error);
+                        // Continue with sending message if there's an error checking limits
+                      }
+
+                      handleSendMessage?.(event, messageInput);
+                    })}
+                  {!chatStarted && <StarterTemplates />}
+                </div>
               </div>
             </div>
+            <ClientOnly>
+              {() => (
+                <Workbench
+                  actionRunner={actionRunner ?? ({} as ActionRunner)}
+                  chatStarted={chatStarted}
+                  isStreaming={isStreaming}
+                  setSelectedElement={setSelectedElement}
+                />
+              )}
+            </ClientOnly>
           </div>
-          <ClientOnly>
-            {() => (
-              <Workbench
-                actionRunner={actionRunner ?? ({} as ActionRunner)}
-                chatStarted={chatStarted}
-                isStreaming={isStreaming}
-                setSelectedElement={setSelectedElement}
-              />
-            )}
-          </ClientOnly>
         </div>
       </div>
     );
