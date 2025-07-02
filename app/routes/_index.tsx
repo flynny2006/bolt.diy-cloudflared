@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import type { User } from '~/lib/services/userService';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Bolt' }, { name: 'description', content: 'Talk with Bolt, an AI assistant from StackBlitz' }];
+  return [{ title: 'Boongle AI' }, { name: 'description', content: 'Build fullstack web apps in seconds.' }];
 };
 
 export const loader = () => json({});
@@ -69,7 +69,7 @@ export default function Index() {
       <BackgroundRays />
       <Header onLogout={handleLogout} currentUser={currentUser} />
       {currentUser ? (
-        <ClientOnly fallback={<BaseChat />}>{() => <Chat />}</ClientOnly>
+        <ClientOnly fallback={<div className="flex items-center justify-center h-full"><div className="text-white text-lg">Loading chat...</div></div>}>{() => <Chat />}</ClientOnly>
       ) : (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">

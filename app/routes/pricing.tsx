@@ -134,7 +134,7 @@ export default function Pricing() {
         <div className="flex-1 bg-[#101522] border-2 border-blue-500 rounded-2xl p-8 shadow-xl flex flex-col items-center scale-105">
           <h2 className="text-2xl font-bold text-blue-300 mb-2">PRO</h2>
           <div className="text-4xl font-extrabold mb-4 text-white">$4.99 <span className="text-lg font-normal">lifetime</span></div>
-          <div className="text-lg font-semibold text-blue-300 mb-4">15M Monthly Tokens</div>
+          <div className="text-lg font-semibold text-blue-300 mb-4">3.5M Hourly Tokens</div>
           <ul className="text-left text-gray-200 space-y-2 mb-8">
             <li>✔️ Everything in FREE</li>
             <li>✔️ Access to Gemini 2.5 Flash</li>
@@ -148,7 +148,7 @@ export default function Pricing() {
         <div className="flex-1 bg-[#101522] border-2 border-blue-400 rounded-2xl p-8 shadow-lg flex flex-col items-center">
           <h2 className="text-2xl font-bold text-blue-200 mb-2">PREMIUM</h2>
           <div className="text-4xl font-extrabold mb-4 text-white">$9.99 <span className="text-lg font-normal">lifetime</span></div>
-          <div className="text-lg font-semibold text-blue-300 mb-4">125M Monthly Tokens</div>
+          <div className="text-lg font-semibold text-blue-300 mb-4">35B Monthly Tokens</div>
           <ul className="text-left text-gray-200 space-y-2 mb-8">
             <li>✔️ Everything In PRO</li>
             <li>✔️ All Models Access</li>

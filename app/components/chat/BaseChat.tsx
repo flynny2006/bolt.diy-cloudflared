@@ -34,6 +34,10 @@ import { ChatBox } from './ChatBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import TokenUsageTracker from './TokenUsageTracker';
+import { Dialog, DialogRoot } from '~/components/ui/Dialog';
+import { SettingsButton } from '~/components/ui/SettingsButton';
+import { useTranslation } from '~/components/ui/useTranslation';
+import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -145,10 +149,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       totalTokens: 0
     });
     const [countdown, setCountdown] = useState('');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [settingsCategory, setSettingsCategory] = useState(0);
+    const { t, language, setLanguage, languages } = useTranslation();
+    const settingsCategories = [
+      'General',
+      'Appearance',
+      'Account',
+      'Integrations',
+      'Tokens',
+      'About',
+    ];
+    const [showAIWarning, setShowAIWarning] = useState(true);
 
     // Countdown timer for unlimited tokens
     useEffect(() => {
-      const targetDate = new Date('2025-06-20T17:11:00');
+      const targetDate = new Date('2025-07-15T17:11:00');
       
       const updateCountdown = () => {
         const now = new Date();
@@ -411,12 +427,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
     const baseChat = (
       <div className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')} data-chat-visible={showChat} ref={ref}>
-        <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-center font-semibold z-50" style={{ fontSize: '15px', lineHeight: '2.2', minHeight: 'unset', height: '32px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
-          We are currently experiencing some AI issues. AI requests may fail.
-        </div>
+        {showAIWarning && (
+          <div className="absolute top-0 left-0 w-full bg-orange-500 text-white font-semibold z-50 flex items-center justify-center gap-2 px-4" style={{ fontSize: '15px', lineHeight: '2.2', minHeight: 'unset', height: '32px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
+            <span>AI issues resolved. But AI requests may STILL fail.</span>
+            <button
+              onClick={() => setShowAIWarning(false)}
+              className="ml-2 text-white hover:text-gray-200 text-lg p-1 rounded transition-colors"
+              style={{ lineHeight: 1 }}
+              aria-label="Close AI warning"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div className="absolute top-0 right-0 mt-2 mr-4 z-50" style={{ display: !chatStarted ? 'block' : 'none' }}>
           <a href="/pricing" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition-all duration-200">
-            Upgrade Plan
+            {t('upgradePlan')}
           </a>
         </div>
         <div className="pt-[32px] w-full h-full">
@@ -425,14 +451,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
               {!chatStarted && (
                 <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
-                  <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                    What do you want to build?
+                  <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in whitespace-nowrap overflow-hidden text-ellipsis">
+                    {t('ideaToApp')}
                   </h1>
                   <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
-                    Build fullstack web and mobile apps in seconds.
+                    {t('buildFullstack')}
                   </p>
                   <div className="text-lg font-bold text-green-400 animate-fade-in animation-delay-400 mb-8">
-                    ⏰ Unlimited tokens ends in: {countdown}
+                    ⏰ {t('unlimitedEnds')} {countdown}
                   </div>
                 </div>
               )}
@@ -551,10 +577,108 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               </StickToBottom>
               <div className="flex flex-col justify-center">
                 {!chatStarted && (
-                  <div className="flex justify-center gap-2">
-                    {ImportButtons(importChat)}
-                    <GitCloneButton importChat={importChat} />
-                  </div>
+                  <>
+                    <div className="flex justify-center gap-2">
+                      {ImportButtons(importChat)}
+                      <GitCloneButton importChat={importChat} />
+                    </div>
+                    {/* Settings Button at the bottom */}
+                    <div className="fixed bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none">
+                      <div className="pointer-events-auto">
+                        <SettingsButton onClick={() => setIsSettingsOpen(true)} />
+                      </div>
+                    </div>
+                    <DialogRoot open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                      <Dialog className="!w-[700px] !max-w-[95vw] !p-0 bg-gradient-to-br from-blue-700 via-black to-gray-950 border-0 shadow-2xl">
+                        <div className="flex h-[480px]">
+                          {/* Sidebar */}
+                          <div className="flex flex-col w-48 bg-black/80 border-r border-blue-800 py-6 px-2 gap-2">
+                            {settingsCategories.map((cat, idx) => (
+                              <button
+                                key={cat}
+                                className={`text-left px-4 py-2 rounded-lg font-medium transition-colors
+                                  ${settingsCategory === idx
+                                    ? 'bg-blue-700 text-white shadow-md'
+                                    : 'bg-blue-950/60 text-blue-200 hover:bg-blue-900/40 hover:text-white border border-blue-900/40'}
+                                `}
+                                onClick={() => setSettingsCategory(idx)}
+                              >
+                                {cat}
+                              </button>
+                            ))}
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 flex flex-col items-center justify-center p-8 text-blue-100">
+                            <h2 className="text-2xl font-bold mb-4 text-blue-200">{settingsCategories[settingsCategory]}</h2>
+                            {settingsCategories[settingsCategory] === 'Integrations' && (
+                              <div className="w-full flex flex-col items-center mb-8">
+                                {/* Lovable Integration Box */}
+                                <div className="w-full max-w-md bg-gradient-to-br from-pink-600/80 via-black/80 to-blue-700/80 border border-pink-400 rounded-2xl shadow-lg p-6 flex items-center gap-5 mb-4">
+                                  <img src="/icons/lovable.svg" alt="Lovable" className="w-14 h-14 rounded-xl bg-white p-2 shadow" />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xl font-bold text-pink-100">Lovable</span>
+                                      <span className="bg-pink-600 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">COMING SOON</span>
+                                    </div>
+                                    <div className="text-pink-100 text-sm opacity-90">Build and import your Lovable apps right into here and continue editing!</div>
+                                  </div>
+                                </div>
+                                {/* Stackblitz Integration Box */}
+                                <div className="w-full max-w-md bg-gradient-to-br from-blue-800/80 via-black/80 to-gray-900/80 border border-blue-900 rounded-2xl shadow-lg p-6 flex items-center gap-5 mb-4">
+                                  <img src="/icons/stackblitz.svg" alt="Stackblitz" className="w-14 h-14 rounded-xl bg-white p-2 shadow" />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xl font-bold text-blue-100">Stackblitz</span>
+                                      <span className="bg-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">COMING SOON</span>
+                                    </div>
+                                    <div className="text-blue-200 text-sm opacity-90">Import your Stackblitz projects right into there and continue editing!</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {settingsCategories[settingsCategory] === 'Tokens' && (
+                              <div className="w-full max-w-md bg-gradient-to-br from-blue-800/80 via-black/80 to-gray-900/80 border border-blue-900 rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 mb-8">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-3xl font-bold text-blue-200">Unlimited tokens</span>
+                                  <span className="bg-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">ACTIVE</span>
+                                </div>
+                                <div className="w-full mt-4">
+                                  <div className="w-full h-4 bg-blue-950/60 rounded-full overflow-hidden border border-blue-900">
+                                    <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" style={{ width: '100%' }}></div>
+                                  </div>
+                                  <div className="text-right text-xs text-blue-300 mt-1">100% left</div>
+                                </div>
+                                <div className="text-blue-200 text-sm opacity-90 mt-2">You currently have unlimited tokens. Enjoy building without limits!</div>
+                              </div>
+                            )}
+                            {settingsCategories[settingsCategory] === 'General' && (
+                              <div className="w-full max-w-md bg-gradient-to-br from-blue-800/80 via-black/80 to-gray-900/80 border border-blue-900 rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 mb-8">
+                                <div className="w-full flex flex-col gap-4">
+                                  <label className="text-blue-200 text-lg font-semibold mb-2">{t('settings.language')}</label>
+                                  <div className="w-full flex justify-center">
+                                    <Dropdown
+                                      trigger={<button className="bg-blue-700 text-white px-4 py-2 rounded-lg shadow font-semibold text-base flex items-center gap-2 min-w-[180px]">{languages.find(l => l.code === language)?.label || t('settings.selectLanguage')}</button>}
+                                    >
+                                      {languages.map((lang) => (
+                                        <DropdownItem
+                                          key={lang.code}
+                                          onSelect={() => setLanguage(lang.code)}
+                                          className={language === lang.code ? 'bg-blue-600 text-white' : ''}
+                                        >
+                                          {lang.label}
+                                        </DropdownItem>
+                                      ))}
+                                    </Dropdown>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <div className="text-lg opacity-80">This is the <span className="text-blue-400">{t('settings.general')}</span> {t('settings.panel')}</div>
+                          </div>
+                        </div>
+                      </Dialog>
+                    </DialogRoot>
+                  </>
                 )}
                 <div className="flex flex-col gap-5">
                   {!chatStarted &&

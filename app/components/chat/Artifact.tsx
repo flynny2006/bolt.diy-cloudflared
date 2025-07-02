@@ -128,9 +128,11 @@ export const Artifact = memo(({ messageId }: ArtifactProps) => {
               {/* This status text remains the same */}
               {allActionFinished
                 ? artifact.id === 'restored-project-setup'
-                  ? 'Restore files from snapshot'
+                  ? 'Restored files from snapshot'
                   : 'Initial files created'
-                : 'Creating initial files'}
+                : artifact.id === 'restored-project-setup'
+                  ? 'Restoring ...'
+                  : 'Creating initial files'}
             </div>
           </div>
         )}
