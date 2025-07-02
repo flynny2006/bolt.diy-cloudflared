@@ -43,24 +43,24 @@ export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5 }: D
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{triggerWithChevron}</DropdownMenu.Trigger>
-      <DropdownMenu.Content
-        className={classNames(
+        <DropdownMenu.Content
+          className={classNames(
           'min-w-[220px] rounded-xl p-2',
           'bg-white/80 dark:bg-bolt-elements-background-depth-2/80 backdrop-blur-md',
-          'border border-bolt-elements-borderColor',
+            'border border-bolt-elements-borderColor',
           'shadow-2xl',
-          'animate-in fade-in-80 zoom-in-95',
-          'data-[side=bottom]:slide-in-from-top-2',
-          'data-[side=left]:slide-in-from-right-2',
-          'data-[side=right]:slide-in-from-left-2',
-          'data-[side=top]:slide-in-from-bottom-2',
-          'z-[1000]',
-        )}
-        sideOffset={sideOffset}
-        align={align}
-      >
-        {children}
-      </DropdownMenu.Content>
+            'animate-in fade-in-80 zoom-in-95',
+            'data-[side=bottom]:slide-in-from-top-2',
+            'data-[side=left]:slide-in-from-right-2',
+            'data-[side=right]:slide-in-from-left-2',
+            'data-[side=top]:slide-in-from-bottom-2',
+            'z-[1000]',
+          )}
+          sideOffset={sideOffset}
+          align={align}
+        >
+          {children}
+        </DropdownMenu.Content>
     </DropdownMenu.Root>
   );
 };

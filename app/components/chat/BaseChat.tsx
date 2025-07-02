@@ -161,6 +161,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       'About',
     ];
     const [showAIWarning, setShowAIWarning] = useState(true);
+    const [showPartnersModal, setShowPartnersModal] = useState(false);
 
     // Countdown timer for unlimited tokens
     useEffect(() => {
@@ -460,6 +461,47 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   <div className="text-lg font-bold text-green-400 animate-fade-in animation-delay-400 mb-8">
                     ⏰ {t('unlimitedEnds')} {countdown}
                   </div>
+                  {/* Modern Partners Tab/Button */}
+                  <div className="flex justify-center mb-8 animate-fade-in animation-delay-600">
+                    <button
+                      onClick={() => setShowPartnersModal(true)}
+                      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white font-bold py-3 px-8 rounded-2xl shadow-xl text-xl flex items-center gap-3 transition-all duration-200 border-2 border-transparent hover:border-white/30"
+                      style={{ letterSpacing: '0.03em', boxShadow: '0 4px 32px 0 rgba(80, 0, 200, 0.15)' }}
+                    >
+                      <span className="i-ph:handshake-bold text-2xl" />
+                      Partners
+                    </button>
+                  </div>
+                  {/* Partners Modal */}
+                  {showPartnersModal && (
+                    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+                      <div className="bg-gradient-to-br from-blue-900 via-black to-purple-900 rounded-3xl shadow-2xl p-10 max-w-lg w-full flex flex-col items-center border-2 border-blue-700/40 relative">
+                        <button
+                          onClick={() => setShowPartnersModal(false)}
+                          className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold rounded-full p-2 transition-colors"
+                          aria-label="Close"
+                        >
+                          ×
+                        </button>
+                        <div className="flex flex-col items-center gap-4">
+                          <span className="i-ph:handshake-bold text-5xl text-pink-400 mb-2" />
+                          <h2 className="text-3xl font-extrabold text-white mb-2">Partners</h2>
+                          <p className="text-lg text-blue-100 mb-4 text-center max-w-xs">
+                            Want to be seen here? <br />
+                            <span className="font-semibold text-pink-300">Contact us on Discord:</span>
+                          </p>
+                          <a
+                            href="https://discord.gg/hrq9cjXr27"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow-lg text-lg transition-all duration-200 border-2 border-transparent hover:border-white/30"
+                          >
+                            Join Discord
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <StickToBottom
