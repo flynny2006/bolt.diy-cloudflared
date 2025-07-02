@@ -162,8 +162,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     ];
     const [showAIWarning, setShowAIWarning] = useState(true);
     const [showPartnersModal, setShowPartnersModal] = useState(false);
+    const [showFreeTokensModal, setShowFreeTokensModal] = useState(false);
+    // Counter state for random number between 1 and 6
+    const [randomCounter, setRandomCounter] = useState(() => Math.floor(Math.random() * 6) + 1);
 
-    // Countdown timer for unlimited tokens
     useEffect(() => {
       const targetDate = new Date('2025-07-15T17:11:00');
       
@@ -287,6 +289,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           });
       }
     }, [providerList, provider]);
+
+    useEffect(() => {
+      let timeoutId: NodeJS.Timeout;
+      function updateCounter() {
+        setRandomCounter((prev) => {
+          let next = prev + (Math.random() > 0.5 ? 1 : -1);
+          if (next < 1) next = 1;
+          if (next > 6) next = 6;
+          return next;
+        });
+        const nextDelay = Math.floor(Math.random() * 7000) + 1000; // 1-7s
+        timeoutId = setTimeout(updateCounter, nextDelay);
+      }
+      updateCounter();
+      return () => clearTimeout(timeoutId);
+    }, []);
 
     const onApiKeysChange = async (providerName: string, apiKey: string) => {
       const newApiKeys = { ...apiKeys, [providerName]: apiKey };
@@ -442,9 +460,43 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           </div>
         )}
         <div className="absolute top-0 right-0 mt-2 mr-4 z-50" style={{ display: !chatStarted ? 'block' : 'none' }}>
+          <button
+            onClick={() => setShowFreeTokensModal(true)}
+            className="bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 hover:from-green-500 hover:to-purple-500 text-white font-bold px-5 py-2 rounded-lg shadow transition-all duration-200 mr-3 border-2 border-transparent hover:border-white/30 text-base"
+            style={{ letterSpacing: '0.02em', boxShadow: '0 2px 12px 0 rgba(0, 200, 100, 0.10)' }}
+          >
+            FREE TOKENS
+          </button>
           <a href="/pricing" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition-all duration-200">
             {t('upgradePlan')}
           </a>
+          {/* Free Tokens Modal */}
+          {showFreeTokensModal && (
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-gradient-to-br from-blue-900 via-black to-purple-900 rounded-3xl shadow-2xl p-10 max-w-lg w-full flex flex-col items-center border-2 border-blue-700/40 relative">
+                <button
+                  onClick={() => setShowFreeTokensModal(false)}
+                  className="absolute top-4 right-4 text-blue-200/70 hover:text-white text-2xl font-bold rounded-full p-2 transition-colors"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+                <div className="flex flex-col items-center gap-4 w-full">
+                  <span className="i-ph:gift-bold text-5xl text-green-400 mb-2" />
+                  <h2 className="text-3xl font-extrabold text-white mb-2">Get FREE TOKENS</h2>
+                  <ol className="list-decimal list-inside text-blue-100 text-lg mb-4 w-full max-w-xs text-left space-y-2">
+                    <li>Join our <a href="https://discord.gg/hrq9cjXr27" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline font-semibold">Discord</a>.</li>
+                    <li>Set your Status to: <span className="bg-blue-900 text-blue-200 px-2 py-0.5 rounded font-mono text-base">Boongle AI - Build apps in seconds.</span></li>
+                    <li>Tell us with proof</li>
+                    <li>Receive <span className="font-bold text-green-400">free 250k more tokens every hour</span>. <br /><span className="text-xs text-blue-300">This will end after one week.</span></li>
+                  </ol>
+                  <div className="bg-yellow-900/80 border-l-4 border-yellow-500 text-yellow-200 p-3 rounded-xl text-sm w-full max-w-xs mb-2">
+                    <b>Note:</b> Alt accounts on Discord may get banned and your Boongle AI account too.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="pt-[32px] w-full h-full">
           <ClientOnly>{() => <Menu />}</ClientOnly>
@@ -452,6 +504,15 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
               {!chatStarted && (
                 <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
+                  {/* Random Counter */}
+                  <div className="flex flex-col items-center justify-center mb-2 animate-fade-in animation-delay-100">
+                    <span className="inline-block bg-gradient-to-r from-blue-500 to-pink-500 text-white font-bold text-3xl rounded-full px-5 py-2 shadow-lg border-2 border-white/20 select-none">
+                      {randomCounter}
+                    </span>
+                    <span className="mt-1 text-sm text-blue-300/80 font-medium tracking-wide select-none">
+                      people viewing this page right now
+                    </span>
+                  </div>
                   <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in whitespace-nowrap overflow-hidden text-ellipsis">
                     {t('ideaToApp')}
                   </h1>
