@@ -66,42 +66,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
     <div
       className={classNames(
-        'relative bg-bolt-elements-background-depth-2 backdrop-blur p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
-
-        /*
-         * {
-         *   'sticky bottom-2': chatStarted,
-         * },
-         */
+        styles.ModernChatBox,
+        'relative w-full max-w-chat mx-auto z-prompt',
       )}
     >
-      <svg className={classNames(styles.PromptEffectContainer)}>
-        <defs>
-          <linearGradient
-            id="line-gradient"
-            x1="20%"
-            y1="0%"
-            x2="-14%"
-            y2="10%"
-            gradientUnits="userSpaceOnUse"
-            gradientTransform="rotate(-45)"
-          >
-            <stop offset="0%" stopColor="#1488fc" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#1488fc" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#1488fc" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="#1488fc" stopOpacity="0%"></stop>
-          </linearGradient>
-          <linearGradient id="shine-gradient">
-            <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
-          </linearGradient>
-        </defs>
-        <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
-        <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
-      </svg>
-      <div>
+      <div className="px-0 pt-0 pb-0">
         <ClientOnly>
           {() => (
             <div className={props.isModelSettingsCollapsed ? 'hidden' : ''}>
@@ -165,15 +134,17 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </button>
         </div>
       )}
-      <div
-        className={classNames('relative shadow-xs border border-bolt-elements-borderColor backdrop-blur rounded-lg')}
+      {/* Modern chat input container */}
+      <div className={classNames(styles.ModernInputContainer, 'relative flex flex-col gap-2 bg-white/5 dark:bg-black/40 border border-white/10 dark:border-blue-900/60 rounded-2xl shadow-2xl backdrop-blur-lg p-0 overflow-hidden')}
+        style={{ minHeight: 110 }}
       >
         <textarea
           ref={props.textareaRef}
           className={classNames(
-            'w-full pl-4 pt-4 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
+            styles.ModernTextarea,
+            'w-full px-6 pt-6 pb-4 pr-20 outline-none resize-none text-lg font-medium text-white placeholder-blue-400 bg-transparent rounded-2xl',
             'transition-all duration-200',
-            'hover:border-bolt-elements-focus',
+            'focus:ring-2 focus:ring-blue-500/40',
           )}
           onDragEnter={(e) => {
             e.preventDefault();
@@ -190,12 +161,10 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           onDrop={(e) => {
             e.preventDefault();
             e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
-
             const files = Array.from(e.dataTransfer.files);
             files.forEach((file) => {
               if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
-
                 reader.onload = (e) => {
                   const base64Image = e.target?.result as string;
                   props.setUploadedFiles?.([...props.uploadedFiles, file]);
@@ -210,19 +179,14 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               if (event.shiftKey) {
                 return;
               }
-
               event.preventDefault();
-
               if (props.isStreaming) {
                 props.handleStop?.();
                 return;
               }
-
-              // ignore if using input method engine
               if (event.nativeEvent.isComposing) {
                 return;
               }
-
               props.handleSendMessage?.(event);
             }
           }}
@@ -238,6 +202,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           placeholder={props.chatMode === 'build' ? 'Ask Boongle AI...' : 'Plan your app or ask questions...'}
           translate="no"
         />
+        {/* Floating Send Button */}
         <ClientOnly>
           {() => (
             <SendButton
@@ -249,7 +214,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   props.handleStop?.();
                   return;
                 }
-
                 if (props.input.length > 0 || props.uploadedFiles.length > 0) {
                   props.handleSendMessage?.(event);
                 }
@@ -257,8 +221,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             />
           )}
         </ClientOnly>
-        <div className="flex justify-between items-center text-sm p-4 pt-2">
-          <div className="flex gap-1 items-center">
+        {/* Modern controls row */}
+        <div className="flex justify-between items-center px-6 pb-3 pt-1">
+          <div className="flex items-center gap-3">
             <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} />
             <IconButton title="Upload file" className="transition-all" onClick={() => props.handleFileUpload()}>
               <div className="i-ph:paperclip text-xl"></div>
@@ -278,7 +243,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 <div className="i-bolt:stars text-xl"></div>
               )}
             </IconButton>
-
             <SpeechRecognitionButton
               isListening={props.isListening}
               onStart={props.startListening}

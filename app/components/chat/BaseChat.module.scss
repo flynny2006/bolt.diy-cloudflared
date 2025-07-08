@@ -45,3 +45,91 @@
   fill: url(#shine-gradient);
   mix-blend-mode: overlay;
 }
+
+.ModernChatBox {
+  position: relative;
+  z-index: 10;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ModernInputContainer {
+  background: linear-gradient(120deg, rgba(36,40,54,0.85) 60%, rgba(80,60,120,0.7) 100%);
+  border-radius: 1.5rem;
+  border: 1.5px solid rgba(120,140,255,0.13);
+  box-shadow: 0 6px 32px 0 rgba(80, 0, 200, 0.13), 0 1.5px 8px 0 rgba(0,0,0,0.10);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  padding: 0;
+  overflow: hidden;
+  min-height: 110px;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.ModernInputContainer:focus-within {
+  box-shadow: 0 8px 36px 0 rgba(80, 0, 200, 0.18), 0 2px 12px 0 rgba(0,0,0,0.13);
+  border-color: #4B73FF;
+}
+
+.ModernTextarea {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1.18rem;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 1.25rem;
+  min-height: 56px;
+  max-height: 140px;
+  box-shadow: none;
+  resize: none;
+  transition: background 0.2s, color 0.2s;
+  padding-left: 1.5rem;
+  padding-right: 5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.ModernTextarea::placeholder {
+  color: #b3c6ff;
+  opacity: 0.85;
+  font-weight: 400;
+  font-size: 1.08rem;
+}
+
+.ModernSelector {
+  background: linear-gradient(120deg, rgba(36,40,54,0.85) 60%, rgba(80,60,120,0.7) 100%);
+  border-radius: 1.5rem;
+  border: 1.5px solid rgba(120,140,255,0.13);
+  box-shadow: 0 4px 18px 0 rgba(80, 0, 200, 0.10), 0 1.5px 8px 0 rgba(0,0,0,0.08);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  color: #fff;
+  font-size: 1.08rem;
+  font-weight: 500;
+  transition: box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), border 0.18s;
+}
+
+.ModernSelector:focus, .ModernSelector:focus-within, .ModernSelector:active {
+  box-shadow: 0 8px 36px 0 rgba(80, 0, 200, 0.16), 0 2px 12px 0 rgba(0,0,0,0.10);
+  border-color: #4B73FF;
+  outline: none;
+}
+
+.ModernSelectorDropdown {
+  background: linear-gradient(120deg, rgba(36,40,54,0.97) 60%, rgba(80,60,120,0.92) 100%);
+  border-radius: 1.5rem;
+  border: 1.5px solid rgba(120,140,255,0.18);
+  box-shadow: 0 8px 36px 0 rgba(80, 0, 200, 0.18), 0 2px 12px 0 rgba(0,0,0,0.13);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  color: #fff;
+  font-size: 1.05rem;
+  z-index: 50;
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  border-bottom-left-radius: 1.5rem;
+  border-bottom-right-radius: 1.5rem;
+  overflow: hidden;
+}

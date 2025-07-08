@@ -108,7 +108,7 @@ export const TerminalTabs = memo(() => {
                       onClick={() => setActiveTerminal(index)}
                     >
                       <div className="i-ph:terminal-window-duotone text-lg" />
-                      <span className="font-semibold">Bolt Terminal</span>
+                      <span className="font-semibold">DEV TERMINAL</span>
                     </button>
                   ) : (
                     <React.Fragment>

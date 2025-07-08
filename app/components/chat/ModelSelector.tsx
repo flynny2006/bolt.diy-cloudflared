@@ -344,11 +344,8 @@ export const ModelSelector = ({
       <div className="relative flex w-full" onKeyDown={handleProviderKeyDown} ref={providerDropdownRef}>
         <div
           className={classNames(
-            'w-full p-2 rounded-lg border border-bolt-elements-borderColor',
-            'bg-bolt-elements-prompt-background text-bolt-elements-textPrimary',
-            'focus-within:outline-none focus-within:ring-2 focus-within:ring-bolt-elements-focus',
-            'transition-all cursor-pointer',
-            isProviderDropdownOpen ? 'ring-2 ring-bolt-elements-focus' : undefined,
+            'w-full px-4 py-2 rounded-2xl border border-white/10 dark:border-blue-900/60 bg-white/5 dark:bg-black/40 shadow-2xl backdrop-blur-lg text-white text-base font-medium transition-all duration-200 cursor-pointer ModernSelector',
+            isProviderDropdownOpen ? 'ring-2 ring-blue-500/40 border-blue-500/40' : '',
           )}
           onClick={() => setIsProviderDropdownOpen(!isProviderDropdownOpen)}
           onKeyDown={(e) => {
@@ -367,7 +364,7 @@ export const ModelSelector = ({
             <div className="truncate">{provider?.name || 'Select provider'}</div>
             <div
               className={classNames(
-                'i-ph:caret-down w-4 h-4 text-bolt-elements-textSecondary opacity-75',
+                'i-ph:caret-down w-4 h-4 text-white opacity-75',
                 isProviderDropdownOpen ? 'rotate-180' : undefined,
               )}
             />
@@ -376,7 +373,7 @@ export const ModelSelector = ({
 
         {isProviderDropdownOpen && (
           <div
-            className="absolute z-20 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 shadow-lg"
+            className="absolute z-20 w-full mt-1 py-2 rounded-2xl border border-white/10 dark:border-blue-900/60 bg-white/10 dark:bg-black/80 shadow-2xl ModernSelectorDropdown backdrop-blur-lg"
             role="listbox"
             id="provider-listbox"
           >
@@ -508,11 +505,8 @@ export const ModelSelector = ({
       <div className="relative flex w-full min-w-[70%]" onKeyDown={handleModelKeyDown} ref={modelDropdownRef}>
         <div
           className={classNames(
-            'w-full p-2 rounded-lg border border-bolt-elements-borderColor',
-            'bg-bolt-elements-prompt-background text-bolt-elements-textPrimary',
-            'focus-within:outline-none focus-within:ring-2 focus-within:ring-bolt-elements-focus',
-            'transition-all cursor-pointer',
-            isModelDropdownOpen ? 'ring-2 ring-bolt-elements-focus' : undefined,
+            'w-full px-4 py-2 rounded-2xl border border-white/10 dark:border-blue-900/60 bg-white/5 dark:bg-black/40 shadow-2xl backdrop-blur-lg text-white text-base font-medium transition-all duration-200 cursor-pointer ModernSelector',
+            isModelDropdownOpen ? 'ring-2 ring-blue-500/40 border-blue-500/40' : '',
           )}
           onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
           onKeyDown={(e) => {
@@ -531,7 +525,7 @@ export const ModelSelector = ({
             <div className="truncate">{modelList.find((m) => m.name === model)?.label || 'Select model'}</div>
             <div
               className={classNames(
-                'i-ph:caret-down w-4 h-4 text-bolt-elements-textSecondary opacity-75',
+                'i-ph:caret-down w-4 h-4 text-white opacity-75',
                 isModelDropdownOpen ? 'rotate-180' : undefined,
               )}
             />
@@ -540,7 +534,7 @@ export const ModelSelector = ({
 
         {isModelDropdownOpen && (
           <div
-            className="absolute z-10 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 shadow-lg"
+            className="absolute z-10 w-full mt-1 py-2 rounded-2xl border border-white/10 dark:border-blue-900/60 bg-white/10 dark:bg-black/80 shadow-2xl ModernSelectorDropdown backdrop-blur-lg"
             role="listbox"
             id="model-listbox"
           >

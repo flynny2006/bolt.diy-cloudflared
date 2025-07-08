@@ -23,11 +23,10 @@ interface AssistantMessageProps {
 
 function openArtifactInWorkbench(filePath: string) {
   filePath = normalizedFilePath(filePath);
-
-  if (workbenchStore.currentView.get() !== 'code') {
-    workbenchStore.currentView.set('code');
-  }
-
+  // Remove forced tab switch to 'code'. Only set the selected file.
+  // if (workbenchStore.currentView.get() !== 'code') {
+  //   workbenchStore.currentView.set('code');
+  // }
   workbenchStore.setSelectedFile(`${WORK_DIR}/${filePath}`);
 }
 

@@ -163,7 +163,16 @@ export const EditorPanel = memo(
                   </div>
                 )}
               </PanelHeader>
-              <div className="h-full flex-1 overflow-hidden modern-scrollbar">
+              <div className="h-full flex-1 overflow-hidden modern-scrollbar relative">
+                {isStreaming && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto select-none">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="i-ph:spinner animate-spin text-4xl text-blue-400 mb-2" />
+                      <div className="text-lg font-bold text-blue-200">AI is coding...</div>
+                      <div className="text-blue-300 text-sm opacity-80">You can still view the code, but editing is disabled until the AI finishes.</div>
+                    </div>
+                  </div>
+                )}
                 <CodeMirrorEditor
                   theme={theme}
                   editable={!isStreaming && editorDocument !== undefined}

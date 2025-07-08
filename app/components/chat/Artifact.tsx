@@ -132,7 +132,7 @@ export const Artifact = memo(({ messageId }: ArtifactProps) => {
                   : 'Initial files created'
                 : artifact.id === 'restored-project-setup'
                   ? 'Restoring ...'
-                  : 'Creating initial files'}
+                : 'Creating initial files'}
             </div>
           </div>
         )}
@@ -187,10 +187,10 @@ const actionVariants = {
 };
 
 export function openArtifactInWorkbench(filePath: any) {
-  if (workbenchStore.currentView.get() !== 'code') {
-    workbenchStore.currentView.set('code');
-  }
-
+  // Remove forced tab switch to 'code'. Only set the selected file.
+  // if (workbenchStore.currentView.get() !== 'code') {
+  //   workbenchStore.currentView.set('code');
+  // }
   workbenchStore.setSelectedFile(`${WORK_DIR}/${filePath}`);
 }
 

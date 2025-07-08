@@ -312,11 +312,12 @@ export const Workbench = memo(
       workbenchStore.currentView.set(view);
     };
 
-    useEffect(() => {
-      if (hasPreview) {
-        setSelectedView('preview');
-      }
-    }, [hasPreview]);
+    // REMOVE this effect to stop auto-switching to Preview (and thus Code) when AI is coding
+    // useEffect(() => {
+    //   if (hasPreview) {
+    //     setSelectedView('preview');
+    //   }
+    // }, [hasPreview]);
 
     useEffect(() => {
       workbenchStore.setDocuments(files);

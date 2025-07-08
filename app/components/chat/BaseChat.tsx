@@ -38,6 +38,7 @@ import { Dialog, DialogRoot } from '~/components/ui/Dialog';
 import { SettingsButton } from '~/components/ui/SettingsButton';
 import { useTranslation } from '~/components/ui/useTranslation';
 import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
+import { db, getAll, type ChatHistoryItem } from '~/lib/persistence';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -165,6 +166,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [showFreeTokensModal, setShowFreeTokensModal] = useState(false);
     // Counter state for random number between 1 and 6
     const [randomCounter, setRandomCounter] = useState(() => Math.floor(Math.random() * 6) + 1);
+    const [historyList, setHistoryList] = useState<ChatHistoryItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
       const targetDate = new Date('2025-07-15T17:11:00');
@@ -306,6 +309,16 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       return () => clearTimeout(timeoutId);
     }, []);
 
+    useEffect(() => {
+      // Fetch chat/project history for homepage grid
+      if (!chatStarted && typeof window !== 'undefined' && db) {
+        getAll(db)
+          .then((list) => list.filter((item) => item.urlId && item.description))
+          .then(setHistoryList)
+          .catch((error) => console.error('Failed to load chat/project history:', error));
+      }
+    }, [chatStarted]);
+
     const onApiKeysChange = async (providerName: string, apiKey: string) => {
       const newApiKeys = { ...apiKeys, [providerName]: apiKey };
       setApiKeys(newApiKeys);
@@ -444,6 +457,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       }
     };
 
+    // Filtered list for search
+    const filteredHistory = historyList.filter(item =>
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const baseChat = (
       <div className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')} data-chat-visible={showChat} ref={ref}>
         {showAIWarning && (
@@ -457,7 +475,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             >
               ×
             </button>
-          </div>
+        </div>
         )}
         <div className="absolute top-0 right-0 mt-2 mr-4 z-50" style={{ display: !chatStarted ? 'block' : 'none' }}>
           <button
@@ -681,10 +699,53 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               <div className="flex flex-col justify-center">
                 {!chatStarted && (
                   <>
-                    <div className="flex justify-center gap-2">
-                      {ImportButtons(importChat)}
-                      <GitCloneButton importChat={importChat} />
-                    </div>
+                  <div className="flex justify-center gap-2">
+                    {ImportButtons(importChat)}
+                    <GitCloneButton importChat={importChat} />
+                  </div>
+                    {/* Modern Project/Chat Boxes as a normal section on the homepage */}
+                    {!chatStarted && historyList.length > 0 && (
+                      <section className="w-full flex flex-col items-center mt-12 animate-fade-in animation-delay-800">
+                        <div className="w-full max-w-5xl px-4">
+                          <div className="bg-black border border-blue-900 rounded-3xl shadow-2xl p-6 flex flex-col gap-4">
+                            <h2 className="text-lg font-bold text-blue-200 mb-2 pl-1">Your Projects & Chats</h2>
+                            {/* Search Bar */}
+                            <div className="mb-3 flex justify-end">
+                              <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                placeholder="Search projects..."
+                                className="w-full max-w-xs bg-black border border-blue-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40 text-blue-100 placeholder-blue-400 rounded-lg px-4 py-2 outline-none transition-all duration-150 shadow-sm"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 max-h-[220px] overflow-y-auto modern-scrollbar">
+                              {historyList.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="relative group bg-gradient-to-br from-blue-800/80 via-blue-900/80 to-black/80 border border-blue-700 rounded-2xl shadow-xl p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:border-blue-400 hover:ring-2 hover:ring-blue-500/30"
+                                  onClick={() => window.location.href = `/chat/${item.urlId}`}
+                                  title={item.description}
+                                  style={{ minHeight: '110px' }}
+                                >
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-950 flex items-center justify-center shadow-inner border border-blue-900">
+                                      <span className="i-ph:folder-open-duotone text-2xl text-blue-400" />
+                                    </div>
+                                    <span className="text-base font-semibold text-blue-100 truncate w-full">{item.description}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-2">
+                                    <span className="text-xs text-blue-400 opacity-80">{new Date(item.timestamp).toLocaleDateString()}</span>
+                                    <span className="i-ph:arrow-up-right h-5 w-5 text-blue-400 group-hover:text-white transition-colors" />
+                                  </div>
+                                  <div className="absolute inset-0 rounded-2xl pointer-events-none group-hover:shadow-[0_0_24px_4px_rgba(0,176,255,0.18)] transition-all duration-200" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+                    )}
                     {/* Settings Button at the bottom */}
                     <div className="fixed bottom-6 left-0 w-full flex justify-center z-[100] pointer-events-none">
                       <div className="pointer-events-auto">
